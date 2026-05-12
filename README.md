@@ -13,6 +13,7 @@ RL Overlay est un overlay web léger pour afficher en direct les informations d'
 - [Structure du projet](#structure-du-projet)
 - [Installation](#installation)
 - [Utilisation](#utilisation)
+  - [Logos des équipes](#2-logos-des-équipes)
 - [Tests](#tests)
 - [Sources](#sources)
 
@@ -32,7 +33,10 @@ rl_overlay/
 ├─ templates/
 │  ├─ overlay.html           # Interface overlay affichée dans le navigateur
 │  ├─ template.html          # Page de test / débogage
-│  └─ image.png              # Fond de démonstration utilisé pour le gameplay
+│  └─ images/
+│     ├─ image.png           # Fond de démonstration utilisé pour le gameplay
+│     ├─ logo_vitality.png   # Logo de l'équipe Vitality
+│     └─ logo_nrg.png        # Logo de l'équipe NRG
 ├─ run_test.ps1              # Lancement en mode test sous Windows
 ├─ run_test.sh               # Lancement en mode test sous Linux / macOS
 ├─ requirements.txt          # Dépendances Python
@@ -74,14 +78,26 @@ rl_overlay/
 ## 1. Aperçu visuel
 
 <p align="center">
-  <img src="templates/image.png" alt="Fond de démonstration" width="700">
+   <img src="templates/images/image.png" alt="Fond de démonstration" width="700">
   <br/>
   <em>Fig 1. Fond de démonstration utilisé pour simuler le gameplay pendant l'affichage de l'overlay.</em>
 </p>
 
 L'overlay HTML se superpose à ce fond pour simuler une partie en cours avec les panneaux joueurs, le bandeau central et les indicateurs d'état.
 
-## 2. Lancement en mode test
+## 2. Logos des équipes
+
+<p align="center">
+   <img src="templates/images/logo_vitality.png" alt="Logo Vitality" width="300">
+   &nbsp;&nbsp;
+   <img src="templates/images/logo_nrg.png" alt="Logo NRG" width="300">
+   <br/>
+   <em>Fig 2. Logos des équipes Vitality et NRG utilisés dans l'overlay.</em>
+</p>
+
+Ces logos peuvent être affichés à côté des noms d'équipes dans le bandeau central de l'overlay.
+
+## 3. Lancement en mode test
 
 ```bash
 # Linux / macOS
@@ -93,7 +109,7 @@ L'overlay HTML se superpose à ce fond pour simuler une partie en cours avec les
 
 Le serveur démarre en mode test avec des événements mockés depuis `data/test_event.json`. L'overlay est ensuite disponible sur `http://localhost:8000/overlay`.
 
-## 3. Lancement manuel
+## 4. Lancement manuel
 
 ```bash
 uvicorn src.server:app --reload --host 0.0.0.0 --port 8000

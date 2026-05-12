@@ -6,97 +6,113 @@
     <title>RL Overlay</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
+      @font-face {
+        font-family: "Bourgeois Bold Italic";
+        src: url("/Bourgeois-BoldItalic.ttf") format("truetype");
+        font-weight: normal;
+        font-style: normal;
+      }
+
       html,
       body {
         width: 100%;
         height: 100%;
         margin: 0;
-        background: url("/image.png") center/cover no-repeat;
         overflow: hidden;
       }
       body {
-        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-family: "Bourgeois Bold Italic", serif;
+        position: relative;
+        background: transparent;
+      }
+      .bg-layer {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        z-index: 0;
+        pointer-events: none;
       }
     </style>
   </head>
   <body>
-    <div class="relative h-full w-full text-white flex flex-col">
-      <!-- Event Title Band -->
-      <div
-        class="pointer-events-none w-full bg-black/40 px-8 py-2 shadow-[0_0_40px_rgba(0,0,0,0.35)] backdrop-blur-sm"
-      >
-        <div
-          id="event-title"
-          class="text-center text-sm font-semibold uppercase tracking-[0.1em] text-slate-200"
-        >
-          —
-        </div>
-      </div>
+    <img src="/gameplay.png" alt="Fond de gameplay" class="bg-layer" />
 
+    <div class="relative z-10 w-full text-white flex flex-col">
       <!-- Score and Teams Band -->
       <div
-        class="pointer-events-none w-full flex items-center justify-center px-8 py-2"
+        class="pointer-events-none w-full flex items-stretch justify-center h-20"
       >
-        <div
-          class="bg-black/25 px-8 py-4 shadow-[0_0_40px_rgba(0,0,0,0.35)] backdrop-blur-sm"
-        >
-          <div class="flex items-center justify-center gap-5 text-center">
-            <div class="flex items-center justify-center gap-3">
+        <div class="bg-black/70 h-full backdrop-blur-sm">
+          <div
+            class="flex h-full items-stretch justify-center gap-0 text-center"
+          >
+            <div
+              id="team1-series"
+              class="w-3 h-full flex flex-col items-center gap-0.5"
+            ></div>
+            <div
+              class="flex h-full w-[320px] shrink-0 items-stretch justify-center gap-0"
+            >
               <div
                 id="team1-logo"
-                class="h-10 w-10 bg-white/20 flex items-center justify-center text-xs font-bold"
+                class="h-full aspect-square bg-white/0 overflow-hidden flex items-center justify-center ml-0 p-2"
               ></div>
               <div
                 id="team1-name"
-                class="min-w-40 px-3 py-1 text-right text-xl font-semibold text-white drop-shadow-lg"
+                class="h-full w-[190px] shrink-0 text-center mx-3 text-[40px] font-semibold uppercase text-white drop-shadow-lg flex items-center justify-center whitespace-nowrap"
               >
                 —
               </div>
             </div>
             <div
               id="team1-score"
-              class="text-5xl font-black tracking-tight text-white drop-shadow-lg"
+              class="h-full min-w-14 px-4 flex items-center justify-center text-5xl font-black tracking-tight text-white drop-shadow-lg"
             >
               0
             </div>
-            <div class="min-w-28 bg-white/10 px-5 py-2 text-center">
-              <div
-                class="text-[11px] uppercase tracking-[0.35em] text-slate-200/70"
-              >
-                <!-- Temps -->
-              </div>
+            <div
+              class="h-full flex-1 min-w-0 bg-white/0 text-center flex items-stretch justify-center"
+            >
               <div
                 id="time"
-                class="text-3xl font-black leading-none text-white"
+                class="h-full w-full px-6 flex items-center justify-center text-3xl font-black leading-none text-black bg-white"
               >
                 —
               </div>
             </div>
             <div
               id="team2-score"
-              class="text-5xl font-black tracking-tight text-white drop-shadow-lg"
+              class="h-full min-w-14 px-4 flex items-center justify-center text-5xl font-black tracking-tight text-white drop-shadow-lg"
             >
               0
             </div>
-            <div class="flex items-center justify-center gap-3">
+            <div
+              class="flex h-full w-[320px] shrink-0 items-stretch justify-center gap-0"
+            >
               <div
                 id="team2-name"
-                class="min-w-40 px-3 py-1 text-left text-xl font-semibold text-white drop-shadow-lg"
+                class="h-full w-[190px] shrink-0 text-center mx-3 text-[40px] font-semibold uppercase text-white drop-shadow-lg flex items-center justify-center whitespace-nowrap"
               >
                 —
               </div>
               <div
                 id="team2-logo"
-                class="h-10 w-10 bg-white/20 flex items-center justify-center text-xs font-bold"
+                class="h-full aspect-square bg-white/0 overflow-hidden flex items-center justify-center mr-0 p-2"
               ></div>
             </div>
+            <div
+              id="team2-series"
+              class="w-3 h-full flex flex-col items-center gap-0.5"
+            ></div>
           </div>
         </div>
       </div>
 
       <!-- Players Container -->
       <div
-        class="pointer-events-none flex-1 w-full flex items-start justify-between px-8"
+        class="pointer-events-none flex-1 w-full flex items-start justify-between -translate-y-12"
       >
         <div class="w-56">
           <div
@@ -117,11 +133,12 @@
     <script>
       const team1PlayersEl = document.getElementById("team1-players");
       const team2PlayersEl = document.getElementById("team2-players");
-      const eventTitleEl = document.getElementById("event-title");
       const team1NameEl = document.getElementById("team1-name");
       const team2NameEl = document.getElementById("team2-name");
       const team1LogoEl = document.getElementById("team1-logo");
       const team2LogoEl = document.getElementById("team2-logo");
+      const team1SeriesEl = document.getElementById("team1-series");
+      const team2SeriesEl = document.getElementById("team2-series");
       const team1ScoreEl = document.getElementById("team1-score");
       const team2ScoreEl = document.getElementById("team2-score");
       const timeEl = document.getElementById("time");
@@ -140,17 +157,43 @@
         return player.Name ?? player.name ?? "Unknown";
       }
 
+      function fitTextToWidth(element, maxFontSize = 40, minFontSize = 24) {
+        if (!element) {
+          return;
+        }
+
+        element.style.fontSize = `${maxFontSize}px`;
+        let fontSize = maxFontSize;
+        while (
+          fontSize > minFontSize &&
+          element.scrollWidth > element.clientWidth
+        ) {
+          fontSize -= 1;
+          element.style.fontSize = `${fontSize}px`;
+        }
+      }
+
+      function renderSeriesBoxes(wins, bestOf = 3, team = 0) {
+        const totalBoxes = Math.max(1, bestOf);
+        const filledBoxes = Math.max(
+          0,
+          Math.min(totalBoxes, Number(wins) || 0),
+        );
+        const teamColor = teamBackgroundColor(team);
+        return Array.from({ length: totalBoxes }, (_, index) => {
+          const filled = index < filledBoxes;
+          const boxStyle = filled
+            ? `background-color: ${teamColor};`
+            : `background-color: rgba(0, 0, 0, 0);`;
+          return `<div class="flex-1 w-3 w-full" style="${boxStyle}"></div>`;
+        }).join("");
+      }
+
       function teamKey(player) {
         return Number(player.TeamNum ?? player.team ?? -1);
       }
 
       function teamBackgroundColor(team) {
-        return team === 0
-          ? "rgba(0, 95, 227, 0.58)"
-          : "rgba(255, 115, 40, 0.58)";
-      }
-
-      function teamNameBackgroundColor(team) {
         return team === 0
           ? "rgba(0, 95, 227, 0.92)"
           : "rgba(255, 115, 40, 0.92)";
@@ -162,13 +205,13 @@
         const boost = Math.min(100, Math.max(0, player.Boost ?? 0));
         const color = "#22c55e"; // green
         return `
-          <div class="" style="background-color: ${teamBackgroundColor(team)};">
+          <div class="bg-black/70">
             <div class="w-full h-2 overflow-hidden" style="background-color: rgba(255, 255, 255, 0);">
               <div
-                style="width: ${boost}%; background-color: white; height: 100%; transition: width 0.1s linear; ${reverse ? "margin-left: auto;" : ""}"
+                style="width: ${boost}%; background-color: ${teamBackgroundColor(team)}; height: 100%; transition: width 0.1s linear; ${reverse ? "margin-left: auto;" : ""}"
               ></div>
             </div>
-            <div class="text-white px-2 py-1">${name}</div>
+            <div class="text-white px-2 py-1 uppercase">${name}</div>
           </div>
         `;
       }
@@ -176,25 +219,51 @@
       function render(state) {
         const score = state.score || { blue: 0, orange: 0 };
         const teams = state.teams || { blue: "Blue", orange: "Orange" };
+        const seriesWins = state.series_wins || { blue: 0, orange: 0 };
+        const bestOf = Number(
+          state.best_of ?? state.bestOf ?? state.match_best_of ?? 3,
+        );
         const eventTitle = state.event_title || state.event_name || "";
         const players = Array.isArray(state.players) ? state.players : [];
         const team1Players = players.filter((player) => teamKey(player) === 0);
         const team2Players = players.filter((player) => teamKey(player) === 1);
 
-        eventTitleEl.textContent = eventTitle;
-        team1NameEl.textContent = teams.blue || "Blue";
-        team2NameEl.textContent = teams.orange || "Orange";
-        team1NameEl.style.backgroundColor = teamNameBackgroundColor(0);
-        team2NameEl.style.backgroundColor = teamNameBackgroundColor(1);
-        team1LogoEl.textContent = (teams.blue || "B")
-          .substring(0, 1)
-          .toUpperCase();
-        team2LogoEl.textContent = (teams.orange || "O")
-          .substring(0, 1)
-          .toUpperCase();
+        team1NameEl.textContent = (teams.blue || "Blue").toUpperCase();
+        team2NameEl.textContent = (teams.orange || "Orange").toUpperCase();
+        team1NameEl.style.backgroundColor = "transparent";
+        team2NameEl.style.backgroundColor = "transparent";
+        team1SeriesEl.innerHTML = renderSeriesBoxes(
+          seriesWins.blue ?? 0,
+          bestOf,
+          0,
+        );
+        team2SeriesEl.innerHTML = renderSeriesBoxes(
+          seriesWins.orange ?? 0,
+          bestOf,
+          1,
+        );
+        team1LogoEl.innerHTML = `
+          <img
+            src="/logo_vitality.png"
+            alt="Logo Vitality"
+            class="h-full w-full object-contain"
+          />
+        `;
+        team2LogoEl.innerHTML = `
+          <img
+            src="/logo_nrg.png"
+            alt="Logo NRG"
+            class="h-full w-full object-contain"
+          />
+        `;
+        team1ScoreEl.style.backgroundColor = teamBackgroundColor(0);
+        team2ScoreEl.style.backgroundColor = teamBackgroundColor(1);
         team1ScoreEl.textContent = score.blue ?? 0;
         team2ScoreEl.textContent = score.orange ?? 0;
         timeEl.textContent = normalizeTime(state.time_seconds);
+
+        fitTextToWidth(team1NameEl);
+        fitTextToWidth(team2NameEl);
 
         const team1Html = team1Players
           .map((player) => renderPlayerWithBoost(player))
@@ -220,6 +289,18 @@
         } catch (error) {
           console.error(error);
         }
+      });
+
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(() => {
+          fitTextToWidth(team1NameEl);
+          fitTextToWidth(team2NameEl);
+        });
+      }
+
+      window.addEventListener("resize", () => {
+        fitTextToWidth(team1NameEl);
+        fitTextToWidth(team2NameEl);
       });
     </script>
   </body>

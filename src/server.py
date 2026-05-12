@@ -18,7 +18,21 @@ test_mode = os.getenv("TEST_MODE", "false").lower() == "true"
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data")
 os.makedirs(DATA_PATH, exist_ok=True)
 PARSED_FILE = os.path.join(DATA_PATH, "parsed_state.json")
-IMAGE_PATH = os.path.join(os.path.dirname(__file__), "..", "templates", "image.png")
+IMAGE_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "templates", "images", "image.png"
+)
+GAMEPLAY_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "templates", "images", "gameplay.png"
+)
+VITALITY_LOGO_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "templates", "images", "logo_vitality.png"
+)
+NRG_LOGO_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "templates", "images", "logo_nrg.png"
+)
+BOURGEOIS_BOLD_ITALIC_PATH = os.path.join(
+    os.path.dirname(__file__), "..", "templates", "images", "Bourgeois-BoldItalic.ttf"
+)
 
 
 def load_template(filename: str) -> str:
@@ -74,6 +88,7 @@ def parse_event(event: dict) -> dict:
         "players": [],
         "score": {"blue": 0, "orange": 0},
         "teams": {"blue": "Blue", "orange": "Orange"},
+        "series_wins": {"blue": 0, "orange": 0},
         "winner": None,
         "time_seconds": None,
     }
@@ -106,6 +121,8 @@ def parse_event(event: dict) -> dict:
                 out["teams"]["orange"] = teams[1].get("Name", out["teams"]["orange"])
                 out["score"]["blue"] = teams[0].get("Score", 0)
                 out["score"]["orange"] = teams[1].get("Score", 0)
+                out["series_wins"]["blue"] = teams[0].get("SeriesWins", 0)
+                out["series_wins"]["orange"] = teams[1].get("SeriesWins", 0)
             winner = game.get("Winner")
             if winner:
                 out["winner"] = winner
@@ -149,6 +166,26 @@ async def overlay():
 @app.get("/image.png")
 async def overlay_image():
     return FileResponse(IMAGE_PATH, media_type="image/png")
+
+
+@app.get("/gameplay.png")
+async def gameplay_image():
+    return FileResponse(GAMEPLAY_PATH, media_type="image/png")
+
+
+@app.get("/logo_vitality.png")
+async def vitality_logo():
+    return FileResponse(VITALITY_LOGO_PATH, media_type="image/png")
+
+
+@app.get("/logo_nrg.png")
+async def nrg_logo():
+    return FileResponse(NRG_LOGO_PATH, media_type="image/png")
+
+
+@app.get("/Bourgeois-BoldItalic.ttf")
+async def bourgeois_bold_italic():
+    return FileResponse(BOURGEOIS_BOLD_ITALIC_PATH, media_type="font/ttf")
 
 
 @app.get("/state")

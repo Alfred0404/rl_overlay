@@ -111,6 +111,10 @@
     "blue": "NRG",
     "orange": "Team Vitality"
   },
+  "series_wins": {
+    "blue": 1,
+    "orange": 0
+  },
   "winner": null,
   "time_seconds": 120
 }
