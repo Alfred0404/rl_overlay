@@ -14,6 +14,11 @@ clients: Set[WebSocket] = set()
 latest_state = {}
 state_lock = asyncio.Lock()
 test_mode = os.getenv("TEST_MODE", "false").lower() == "true"
+series_state = {
+    "match_guid": None,
+    "series_wins": {"blue": 0, "orange": 0},
+    "last_game_finished": False,
+}
 
 DATA_PATH = os.path.join(os.path.dirname(__file__), "..", "data")
 os.makedirs(DATA_PATH, exist_ok=True)
@@ -50,6 +55,7 @@ async def parse_and_broadcast(queue: asyncio.Queue):
         event = await queue.get()
         try:
             parsed = parse_event(event)
+            parsed = apply_series_state(parsed)
             # update in-memory state and write to file
             async with state_lock:
                 latest_state.clear()
@@ -88,7 +94,10 @@ def parse_event(event: dict) -> dict:
         "players": [],
         "score": {"blue": 0, "orange": 0},
         "teams": {"blue": "Blue", "orange": "Orange"},
-        "series_wins": {"blue": 0, "orange": 0},
+        "series_wins": None,
+        "is_overtime": False,
+        "match_guid": None,
+        "game_has_winner": False,
         "winner": None,
         "time_seconds": None,
     }
@@ -112,26 +121,78 @@ def parse_event(event: dict) -> dict:
         if players:
             out["players"] = players
 
-        # Extract score and time
+        # Extract score, overtime and time
         game = data.get("Game") if isinstance(data, dict) else None
         if game:
+            out["match_guid"] = data.get("MatchGuid") or game.get("MatchGuid")
             teams = game.get("Teams") or []
             if len(teams) >= 2:
                 out["teams"]["blue"] = teams[0].get("Name", out["teams"]["blue"])
                 out["teams"]["orange"] = teams[1].get("Name", out["teams"]["orange"])
                 out["score"]["blue"] = teams[0].get("Score", 0)
                 out["score"]["orange"] = teams[1].get("Score", 0)
-                out["series_wins"]["blue"] = teams[0].get("SeriesWins", 0)
-                out["series_wins"]["orange"] = teams[1].get("SeriesWins", 0)
+                if any("SeriesWins" in team for team in teams):
+                    out["series_wins"] = {
+                        "blue": teams[0].get("SeriesWins", 0),
+                        "orange": teams[1].get("SeriesWins", 0),
+                    }
+            out["game_has_winner"] = bool(game.get("bHasWinner")) or bool(
+                game.get("Winner")
+            )
             winner = game.get("Winner")
             if winner:
                 out["winner"] = winner
             out["time_seconds"] = game.get("TimeSeconds")
+            out["is_overtime"] = bool(game.get("bOvertime") or game.get("IsOT"))
+        elif isinstance(data, dict):
+            out["match_guid"] = data.get("MatchGuid")
+            out["time_seconds"] = data.get("TimeSeconds")
+            out["is_overtime"] = bool(data.get("bOvertime") or data.get("IsOT"))
+            out["game_has_winner"] = bool(data.get("bHasWinner")) or bool(
+                data.get("Winner")
+            )
 
     except Exception:
         pass
 
     return out
+
+
+def apply_series_state(parsed: dict) -> dict:
+    """Derive series wins from match state when the source does not provide them."""
+    match_guid = parsed.get("match_guid")
+    if match_guid and series_state["match_guid"] != match_guid:
+        series_state["match_guid"] = match_guid
+        series_state["series_wins"] = {"blue": 0, "orange": 0}
+        series_state["last_game_finished"] = False
+
+    # Prefer source-provided series wins if present, otherwise keep our derived count.
+    source_series_wins = parsed.get("series_wins") or {}
+    source_blue = source_series_wins.get("blue")
+    source_orange = source_series_wins.get("orange")
+    has_source_wins = parsed.get("series_wins") is not None
+
+    game_finished = bool(parsed.get("game_has_winner"))
+
+    if not has_source_wins:
+        if game_finished and not series_state["last_game_finished"]:
+            score = parsed.get("score") or {"blue": 0, "orange": 0}
+            blue_score = int(score.get("blue", 0) or 0)
+            orange_score = int(score.get("orange", 0) or 0)
+            if blue_score > orange_score:
+                series_state["series_wins"]["blue"] += 1
+            elif orange_score > blue_score:
+                series_state["series_wins"]["orange"] += 1
+        parsed["series_wins"] = dict(series_state["series_wins"])
+    else:
+        series_state["series_wins"] = {
+            "blue": int(source_blue or 0),
+            "orange": int(source_orange or 0),
+        }
+        parsed["series_wins"] = dict(series_state["series_wins"])
+
+    series_state["last_game_finished"] = game_finished
+    return parsed
 
 
 @app.on_event("startup")

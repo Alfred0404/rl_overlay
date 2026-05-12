@@ -20,11 +20,13 @@
         margin: 0;
         overflow: hidden;
       }
+
       body {
         font-family: "Bourgeois Bold Italic", serif;
         position: relative;
         background: transparent;
       }
+
       .bg-layer {
         position: fixed;
         inset: 0;
@@ -34,13 +36,23 @@
         z-index: 0;
         pointer-events: none;
       }
+
+      .fade-update {
+        transition:
+          opacity 140ms ease,
+          transform 140ms ease;
+      }
+
+      .fade-update.is-updating {
+        opacity: 0.9;
+        transform: translateY(1px);
+      }
     </style>
   </head>
   <body>
     <img src="/gameplay.png" alt="Fond de gameplay" class="bg-layer" />
 
     <div class="relative z-10 w-full text-white flex flex-col">
-      <!-- Score and Teams Band -->
       <div
         class="pointer-events-none w-full flex items-stretch justify-center h-20"
       >
@@ -52,12 +64,13 @@
               id="team1-series"
               class="w-3 h-full flex flex-col items-center gap-0.5"
             ></div>
+
             <div
               class="flex h-full w-[320px] shrink-0 items-stretch justify-center gap-0"
             >
               <div
                 id="team1-logo"
-                class="h-full aspect-square bg-white/0 overflow-hidden flex items-center justify-center ml-0 p-2"
+                class="h-full aspect-square bg-white/0 overflow-hidden flex items-center justify-center p-2"
               ></div>
               <div
                 id="team1-name"
@@ -66,28 +79,40 @@
                 —
               </div>
             </div>
+
             <div
-              id="team1-score"
-              class="h-full min-w-14 px-4 flex items-center justify-center text-5xl font-black tracking-tight text-white drop-shadow-lg"
+              class="h-full flex-1 min-w-0 flex flex-col items-stretch justify-center"
             >
-              0
-            </div>
-            <div
-              class="h-full flex-1 min-w-0 bg-white/0 text-center flex items-stretch justify-center"
-            >
-              <div
-                id="time"
-                class="h-full w-full px-6 flex items-center justify-center text-3xl font-black leading-none text-black bg-white"
-              >
-                —
+              <div class="h-14 w-full flex items-stretch justify-center">
+                <div
+                  id="team1-score"
+                  class="fade-update h-full min-w-14 px-4 flex items-center justify-center text-5xl font-black tracking-tight text-white drop-shadow-lg"
+                >
+                  0
+                </div>
+                <div
+                  id="time"
+                  class="fade-update h-full flex-1 min-w-0 px-6 flex items-center justify-center text-3xl font-black leading-none text-black bg-white"
+                >
+                  —
+                </div>
+                <div
+                  id="team2-score"
+                  class="fade-update h-full min-w-14 px-4 flex items-center justify-center text-5xl font-black tracking-tight text-white drop-shadow-lg"
+                >
+                  0
+                </div>
+              </div>
+              <div class="h-6 w-full flex items-stretch justify-center">
+                <div
+                  id="match-format"
+                  class="fade-update h-full w-full flex items-center justify-center bg-black/70 text-white text-xs font-black uppercase tracking-[0.2em]"
+                >
+                  —
+                </div>
               </div>
             </div>
-            <div
-              id="team2-score"
-              class="h-full min-w-14 px-4 flex items-center justify-center text-5xl font-black tracking-tight text-white drop-shadow-lg"
-            >
-              0
-            </div>
+
             <div
               class="flex h-full w-[320px] shrink-0 items-stretch justify-center gap-0"
             >
@@ -99,9 +124,10 @@
               </div>
               <div
                 id="team2-logo"
-                class="h-full aspect-square bg-white/0 overflow-hidden flex items-center justify-center mr-0 p-2"
+                class="h-full aspect-square bg-white/0 overflow-hidden flex items-center justify-center p-2"
               ></div>
             </div>
+
             <div
               id="team2-series"
               class="w-3 h-full flex flex-col items-center gap-0.5"
@@ -110,7 +136,6 @@
         </div>
       </div>
 
-      <!-- Players Container -->
       <div
         class="pointer-events-none flex-1 w-full flex items-start justify-between -translate-y-12"
       >
@@ -141,6 +166,7 @@
       const team2SeriesEl = document.getElementById("team2-series");
       const team1ScoreEl = document.getElementById("team1-score");
       const team2ScoreEl = document.getElementById("team2-score");
+      const matchFormatEl = document.getElementById("match-format");
       const timeEl = document.getElementById("time");
 
       function normalizeTime(value) {
@@ -173,20 +199,35 @@
         }
       }
 
-      function renderSeriesBoxes(wins, bestOf = 3, team = 0) {
-        const totalBoxes = Math.max(1, bestOf);
-        const filledBoxes = Math.max(
-          0,
-          Math.min(totalBoxes, Number(wins) || 0),
-        );
-        const teamColor = teamBackgroundColor(team);
-        return Array.from({ length: totalBoxes }, (_, index) => {
-          const filled = index < filledBoxes;
-          const boxStyle = filled
-            ? `background-color: ${teamColor};`
-            : `background-color: rgba(0, 0, 0, 0);`;
-          return `<div class="flex-1 w-3 w-full" style="${boxStyle}"></div>`;
-        }).join("");
+      function setTextIfChanged(element, nextValue) {
+        if (!element) {
+          return false;
+        }
+
+        const text = String(nextValue);
+        if (element.textContent === text) {
+          return false;
+        }
+
+        element.classList.add("is-updating");
+        element.textContent = text;
+        requestAnimationFrame(() => element.classList.remove("is-updating"));
+        return true;
+      }
+
+      function setHtmlIfChanged(element, nextValue) {
+        if (!element) {
+          return false;
+        }
+
+        if (element.innerHTML === nextValue) {
+          return false;
+        }
+
+        element.classList.add("is-updating");
+        element.innerHTML = nextValue;
+        requestAnimationFrame(() => element.classList.remove("is-updating"));
+        return true;
       }
 
       function teamKey(player) {
@@ -199,11 +240,27 @@
           : "rgba(255, 115, 40, 0.92)";
       }
 
+      function renderSeriesBoxes(wins, bestOf = 3, team = 0) {
+        const totalBoxes = Math.max(1, bestOf);
+        const filledBoxes = Math.max(
+          0,
+          Math.min(totalBoxes, Number(wins) || 0),
+        );
+        const teamColor = teamBackgroundColor(team);
+
+        return Array.from({ length: totalBoxes }, (_, index) => {
+          const filled = index < filledBoxes;
+          const boxStyle = filled
+            ? `background-color: ${teamColor};`
+            : "background-color: rgb(31, 41, 55);";
+          return `<div class="flex-1 w-3" style="${boxStyle}"></div>`;
+        }).join("");
+      }
+
       function renderPlayerWithBoost(player, reverse = false) {
         const name = playerName(player);
         const team = teamKey(player);
         const boost = Math.min(100, Math.max(0, player.Boost ?? 0));
-        const color = "#22c55e"; // green
         return `
           <div class="bg-black/70">
             <div class="w-full h-2 overflow-hidden" style="background-color: rgba(255, 255, 255, 0);">
@@ -221,46 +278,52 @@
         const teams = state.teams || { blue: "Blue", orange: "Orange" };
         const seriesWins = state.series_wins || { blue: 0, orange: 0 };
         const bestOf = Number(
-          state.best_of ?? state.bestOf ?? state.match_best_of ?? 3,
+          state.best_of ?? state.bestOf ?? state.match_best_of ?? 5,
         );
-        const eventTitle = state.event_title || state.event_name || "";
+        const gamesToWin = Math.max(1, Math.ceil(bestOf / 2));
+        const currentGameNumber = Number(
+          state.game_number ?? state.current_game ?? state.game ?? 2,
+        );
         const players = Array.isArray(state.players) ? state.players : [];
         const team1Players = players.filter((player) => teamKey(player) === 0);
         const team2Players = players.filter((player) => teamKey(player) === 1);
 
-        team1NameEl.textContent = (teams.blue || "Blue").toUpperCase();
-        team2NameEl.textContent = (teams.orange || "Orange").toUpperCase();
-        team1NameEl.style.backgroundColor = "transparent";
-        team2NameEl.style.backgroundColor = "transparent";
-        team1SeriesEl.innerHTML = renderSeriesBoxes(
-          seriesWins.blue ?? 0,
-          bestOf,
-          0,
-        );
-        team2SeriesEl.innerHTML = renderSeriesBoxes(
-          seriesWins.orange ?? 0,
-          bestOf,
-          1,
-        );
-        team1LogoEl.innerHTML = `
+        setTextIfChanged(team1NameEl, (teams.blue || "Blue").toUpperCase());
+        setTextIfChanged(team2NameEl, (teams.orange || "Orange").toUpperCase());
+
+        const team1LogoHtml = `
           <img
             src="/logo_vitality.png"
             alt="Logo Vitality"
             class="h-full w-full object-contain"
           />
         `;
-        team2LogoEl.innerHTML = `
+        const team2LogoHtml = `
           <img
             src="/logo_nrg.png"
             alt="Logo NRG"
             class="h-full w-full object-contain"
           />
         `;
+        setHtmlIfChanged(team1LogoEl, team1LogoHtml);
+        setHtmlIfChanged(team2LogoEl, team2LogoHtml);
         team1ScoreEl.style.backgroundColor = teamBackgroundColor(0);
         team2ScoreEl.style.backgroundColor = teamBackgroundColor(1);
-        team1ScoreEl.textContent = score.blue ?? 0;
-        team2ScoreEl.textContent = score.orange ?? 0;
-        timeEl.textContent = normalizeTime(state.time_seconds);
+        setTextIfChanged(team1ScoreEl, score.blue ?? 0);
+        setTextIfChanged(team2ScoreEl, score.orange ?? 0);
+        setTextIfChanged(timeEl, normalizeTime(state.time_seconds));
+        setTextIfChanged(
+          matchFormatEl,
+          `Game ${currentGameNumber} | First to ${gamesToWin}${state.is_overtime ? " | OT" : ""}`,
+        );
+        setHtmlIfChanged(
+          team1SeriesEl,
+          renderSeriesBoxes(seriesWins.blue ?? 0, gamesToWin, 0),
+        );
+        setHtmlIfChanged(
+          team2SeriesEl,
+          renderSeriesBoxes(seriesWins.orange ?? 0, gamesToWin, 1),
+        );
 
         fitTextToWidth(team1NameEl);
         fitTextToWidth(team2NameEl);
@@ -272,12 +335,8 @@
           .map((player) => renderPlayerWithBoost(player, true))
           .join("");
 
-        if (team1PlayersEl.innerHTML !== team1Html) {
-          team1PlayersEl.innerHTML = team1Html;
-        }
-        if (team2PlayersEl.innerHTML !== team2Html) {
-          team2PlayersEl.innerHTML = team2Html;
-        }
+        setHtmlIfChanged(team1PlayersEl, team1Html);
+        setHtmlIfChanged(team2PlayersEl, team2Html);
       }
 
       const proto = location.protocol === "https:" ? "wss" : "ws";
