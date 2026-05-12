@@ -1,0 +1,110 @@
+{
+  "Event": "UpdateState",
+  "Data": {
+    "Players": [
+      {
+        "Name": "Kronovi",
+        "Team": 0,
+        "TeamNum": 0,
+        "Score": 245,
+        "Goals": 2,
+        "Shots": 5,
+        "Assists": 1,
+        "Saves": 3,
+        "Boost": 85,
+        "Speed": 2100,
+        "Position": [100, 200, 50]
+      },
+      {
+        "Name": "JSTN",
+        "Team": 0,
+        "TeamNum": 0,
+        "Score": 320,
+        "Goals": 3,
+        "Shots": 8,
+        "Assists": 2,
+        "Saves": 2,
+        "Boost": 42,
+        "Speed": 1850,
+        "Position": [-150, 100, 0]
+      },
+      {
+        "Name": "Syp",
+        "Team": 0,
+        "TeamNum": 0,
+        "Score": 180,
+        "Goals": 1,
+        "Shots": 4,
+        "Assists": 3,
+        "Saves": 5,
+        "Boost": 100,
+        "Speed": 1950,
+        "Position": [50, -200, 20]
+      },
+      {
+        "Name": "Kaydop",
+        "Team": 1,
+        "TeamNum": 1,
+        "Score": 290,
+        "Goals": 2,
+        "Shots": 7,
+        "Assists": 2,
+        "Saves": 4,
+        "Boost": 65,
+        "Speed": 2050,
+        "Position": [-100, 150, 0]
+      },
+      {
+        "Name": "Fairy Peak!",
+        "Team": 1,
+        "TeamNum": 1,
+        "Score": 215,
+        "Goals": 1,
+        "Shots": 5,
+        "Assists": 1,
+        "Saves": 2,
+        "Boost": 28,
+        "Speed": 1750,
+        "Position": [200, -100, 30]
+      },
+      {
+        "Name": "Alpha54",
+        "Team": 1,
+        "TeamNum": 1,
+        "Score": 155,
+        "Goals": 1,
+        "Shots": 3,
+        "Assists": 2,
+        "Saves": 6,
+        "Boost": 91,
+        "Speed": 1900,
+        "Position": [-50, -150, 0]
+      }
+    ],
+    "Game": {
+      "TimeSeconds": 120,
+      "IsOT": false,
+      "IsUnlimitedTime": false,
+      "IsPreMatch": false,
+      "HasTarget": false,
+      "MatchType": "Private",
+      "Winner": null,
+      "Teams": [
+        {
+          "Name": "NRG",
+          "ColorPrimary": [0, 100, 200],
+          "ColorSecondary": [0, 150, 255],
+          "Score": 3,
+          "SeriesWins": 1
+        },
+        {
+          "Name": "Team Vitality",
+          "ColorPrimary": [255, 100, 0],
+          "ColorSecondary": [255, 150, 50],
+          "Score": 2,
+          "SeriesWins": 0
+        }
+      ]
+    }
+  }
+}

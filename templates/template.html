@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RL Overlay - Live</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body class="min-h-screen bg-slate-950 text-slate-100">
+    <main class="mx-auto max-w-6xl p-6 md:p-10">
+      <header
+        class="mb-8 flex items-end justify-between gap-4 border-b border-slate-800 pb-5"
+      >
+        <div>
+          <p class="text-xs uppercase tracking-[0.3em] text-cyan-400">
+            Rocket League overlay
+          </p>
+          <h1 class="mt-2 text-3xl font-semibold">State live</h1>
+        </div>
+        <div
+          class="rounded-full border border-cyan-500/40 bg-cyan-500/10 px-3 py-1 text-xs text-cyan-300"
+        >
+          Live WebSocket
+        </div>
+      </header>
+
+      <section class="grid gap-4 md:grid-cols-3">
+        <article
+          class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-cyan-950/20"
+        >
+          <p class="text-sm text-slate-400">Score</p>
+          <div
+            id="score"
+            class="mt-3 text-4xl font-bold tracking-tight text-white"
+          >
+            —
+          </div>
+        </article>
+
+        <article
+          class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-cyan-950/20"
+        >
+          <p class="text-sm text-slate-400">Temps restant</p>
+          <div
+            id="time"
+            class="mt-3 text-4xl font-bold tracking-tight text-white"
+          >
+            —
+          </div>
+        </article>
+
+        <article
+          class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-lg shadow-cyan-950/20"
+        >
+          <p class="text-sm text-slate-400">État</p>
+          <div id="status" class="mt-3 text-2xl font-semibold text-emerald-300">
+            Waiting for data…
+          </div>
+        </article>
+      </section>
+
+      <section class="mt-6 grid gap-4 md:grid-cols-2">
+        <article
+          class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5"
+        >
+          <p class="text-sm text-slate-400">Équipe bleue</p>
+          <div id="team-blue" class="mt-2 text-2xl font-semibold text-cyan-300">
+            —
+          </div>
+        </article>
+
+        <article
+          class="rounded-2xl border border-slate-800 bg-slate-900/80 p-5"
+        >
+          <p class="text-sm text-slate-400">Équipe orange</p>
+          <div
+            id="team-orange"
+            class="mt-2 text-2xl font-semibold text-orange-300"
+          >
+            —
+          </div>
+        </article>
+      </section>
+
+      <section
+        class="mt-6 rounded-2xl border border-slate-800 bg-slate-900/80 p-5"
+      >
+        <p class="text-sm text-slate-400">Gagnant</p>
+        <div id="winner" class="mt-2 text-2xl font-semibold text-amber-300">
+          —
+        </div>
+      </section>
+
+      <section
+        class="mt-6 rounded-2xl border border-slate-800 bg-slate-900/80 p-5"
+      >
+        <div class="mb-4 flex items-center justify-between gap-3">
+          <h2 class="text-lg font-semibold">Joueurs</h2>
+          <span
+            id="players-count"
+            class="rounded-full bg-slate-800 px-3 py-1 text-xs text-slate-300"
+            >0 players</span
+          >
+        </div>
+
+        <div class="overflow-hidden rounded-xl border border-slate-800">
+          <table class="min-w-full divide-y divide-slate-800 text-sm">
+            <thead class="bg-slate-950/70 text-slate-400">
+              <tr>
+                <th class="px-4 py-3 text-left font-medium">Name</th>
+                <th class="px-4 py-3 text-left font-medium">Team</th>
+                <th class="px-4 py-3 text-left font-medium">Score</th>
+                <th class="px-4 py-3 text-left font-medium">Goals</th>
+                <th class="px-4 py-3 text-left font-medium">Shots</th>
+                <th class="px-4 py-3 text-left font-medium">Boost</th>
+                <th class="px-4 py-3 text-left font-medium">Speed</th>
+              </tr>
+            </thead>
+            <tbody
+              id="players"
+              class="divide-y divide-slate-800 bg-slate-900/60"
+            ></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      const scoreEl = document.getElementById("score");
+      const timeEl = document.getElementById("time");
+      const statusEl = document.getElementById("status");
+      const teamBlueEl = document.getElementById("team-blue");
+      const teamOrangeEl = document.getElementById("team-orange");
+      const winnerEl = document.getElementById("winner");
+      const playersEl = document.getElementById("players");
+      const playersCountEl = document.getElementById("players-count");
+
+      function normalizeTime(value) {
+        if (value === null || value === undefined || Number.isNaN(value)) {
+          return "—";
+        }
+        return `${Math.max(0, Math.round(value))}s`;
+      }
+
+      function render(state) {
+        const score = state.score || { blue: 0, orange: 0 };
+        const teams = state.teams || { blue: "Blue", orange: "Orange" };
+        scoreEl.textContent = `${score.blue} - ${score.orange}`;
+        timeEl.textContent = normalizeTime(state.time_seconds);
+        teamBlueEl.textContent = teams.blue || "Blue";
+        teamOrangeEl.textContent = teams.orange || "Orange";
+        winnerEl.textContent = state.winner || "—";
+
+        const players = Array.isArray(state.players) ? state.players : [];
+        playersCountEl.textContent = `${players.length} player${players.length > 1 ? "s" : ""}`;
+        statusEl.textContent = players.length
+          ? "Receiving live data"
+          : "No players yet";
+
+        playersEl.innerHTML = "";
+        players.forEach((player) => {
+          const row = document.createElement("tr");
+          row.className = "hover:bg-slate-800/60 transition-colors";
+
+          const cells = [
+            player.Name ?? player.name ?? "Unknown",
+            player.TeamNum ?? player.team ?? "—",
+            player.Score ?? "0",
+            player.Goals ?? "0",
+            player.Shots ?? "0",
+            player.Boost ?? player.boost ?? "0",
+            typeof player.Speed === "number"
+              ? player.Speed.toFixed(2)
+              : (player.speed ?? "—"),
+          ];
+
+          cells.forEach((value, index) => {
+            const cell = document.createElement("td");
+            cell.className = `px-4 py-3 ${index === 0 ? "font-medium text-white" : "text-slate-300"}`;
+            cell.textContent = value;
+            row.appendChild(cell);
+          });
+
+          playersEl.appendChild(row);
+        });
+      }
+
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+      ws.addEventListener("open", () => {
+        statusEl.textContent = "Connected";
+        statusEl.className = "mt-3 text-2xl font-semibold text-emerald-300";
+      });
+
+      ws.addEventListener("message", (ev) => {
+        try {
+          render(JSON.parse(ev.data));
+        } catch (error) {
+          console.error(error);
+        }
+      });
+
+      ws.addEventListener("close", () => {
+        statusEl.textContent = "Disconnected";
+        statusEl.className = "mt-3 text-2xl font-semibold text-rose-300";
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,226 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RL Overlay</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      html,
+      body {
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        background: url("/image.png") center/cover no-repeat;
+        overflow: hidden;
+      }
+      body {
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="relative h-full w-full text-white flex flex-col">
+      <!-- Event Title Band -->
+      <div
+        class="pointer-events-none w-full bg-black/40 px-8 py-2 shadow-[0_0_40px_rgba(0,0,0,0.35)] backdrop-blur-sm"
+      >
+        <div
+          id="event-title"
+          class="text-center text-sm font-semibold uppercase tracking-[0.1em] text-slate-200"
+        >
+          —
+        </div>
+      </div>
+
+      <!-- Score and Teams Band -->
+      <div
+        class="pointer-events-none w-full flex items-center justify-center px-8 py-2"
+      >
+        <div
+          class="bg-black/25 px-8 py-4 shadow-[0_0_40px_rgba(0,0,0,0.35)] backdrop-blur-sm"
+        >
+          <div class="flex items-center justify-center gap-5 text-center">
+            <div class="flex items-center justify-center gap-3">
+              <div
+                id="team1-logo"
+                class="h-10 w-10 bg-white/20 flex items-center justify-center text-xs font-bold"
+              ></div>
+              <div
+                id="team1-name"
+                class="min-w-40 px-3 py-1 text-right text-xl font-semibold text-white drop-shadow-lg"
+              >
+                —
+              </div>
+            </div>
+            <div
+              id="team1-score"
+              class="text-5xl font-black tracking-tight text-white drop-shadow-lg"
+            >
+              0
+            </div>
+            <div class="min-w-28 bg-white/10 px-5 py-2 text-center">
+              <div
+                class="text-[11px] uppercase tracking-[0.35em] text-slate-200/70"
+              >
+                <!-- Temps -->
+              </div>
+              <div
+                id="time"
+                class="text-3xl font-black leading-none text-white"
+              >
+                —
+              </div>
+            </div>
+            <div
+              id="team2-score"
+              class="text-5xl font-black tracking-tight text-white drop-shadow-lg"
+            >
+              0
+            </div>
+            <div class="flex items-center justify-center gap-3">
+              <div
+                id="team2-name"
+                class="min-w-40 px-3 py-1 text-left text-xl font-semibold text-white drop-shadow-lg"
+              >
+                —
+              </div>
+              <div
+                id="team2-logo"
+                class="h-10 w-10 bg-white/20 flex items-center justify-center text-xs font-bold"
+              ></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Players Container -->
+      <div
+        class="pointer-events-none flex-1 w-full flex items-start justify-between px-8"
+      >
+        <div class="w-56">
+          <div
+            id="team1-players"
+            class="space-y-1 text-lg font-semibold leading-tight drop-shadow-lg"
+          ></div>
+        </div>
+
+        <div class="w-56 text-right">
+          <div
+            id="team2-players"
+            class="space-y-1 text-lg font-semibold leading-tight drop-shadow-lg"
+          ></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const team1PlayersEl = document.getElementById("team1-players");
+      const team2PlayersEl = document.getElementById("team2-players");
+      const eventTitleEl = document.getElementById("event-title");
+      const team1NameEl = document.getElementById("team1-name");
+      const team2NameEl = document.getElementById("team2-name");
+      const team1LogoEl = document.getElementById("team1-logo");
+      const team2LogoEl = document.getElementById("team2-logo");
+      const team1ScoreEl = document.getElementById("team1-score");
+      const team2ScoreEl = document.getElementById("team2-score");
+      const timeEl = document.getElementById("time");
+
+      function normalizeTime(value) {
+        if (value === null || value === undefined || Number.isNaN(value)) {
+          return "—";
+        }
+        const seconds = Math.max(0, Math.round(value));
+        const minutes = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${minutes}:${secs.toString().padStart(2, "0")}`;
+      }
+
+      function playerName(player) {
+        return player.Name ?? player.name ?? "Unknown";
+      }
+
+      function teamKey(player) {
+        return Number(player.TeamNum ?? player.team ?? -1);
+      }
+
+      function teamBackgroundColor(team) {
+        return team === 0
+          ? "rgba(0, 95, 227, 0.58)"
+          : "rgba(255, 115, 40, 0.58)";
+      }
+
+      function teamNameBackgroundColor(team) {
+        return team === 0
+          ? "rgba(0, 95, 227, 0.92)"
+          : "rgba(255, 115, 40, 0.92)";
+      }
+
+      function renderPlayerWithBoost(player, reverse = false) {
+        const name = playerName(player);
+        const team = teamKey(player);
+        const boost = Math.min(100, Math.max(0, player.Boost ?? 0));
+        const color = "#22c55e"; // green
+        return `
+          <div class="" style="background-color: ${teamBackgroundColor(team)};">
+            <div class="w-full h-2 overflow-hidden" style="background-color: rgba(255, 255, 255, 0);">
+              <div
+                style="width: ${boost}%; background-color: white; height: 100%; transition: width 0.1s linear; ${reverse ? "margin-left: auto;" : ""}"
+              ></div>
+            </div>
+            <div class="text-white px-2 py-1">${name}</div>
+          </div>
+        `;
+      }
+
+      function render(state) {
+        const score = state.score || { blue: 0, orange: 0 };
+        const teams = state.teams || { blue: "Blue", orange: "Orange" };
+        const eventTitle = state.event_title || state.event_name || "";
+        const players = Array.isArray(state.players) ? state.players : [];
+        const team1Players = players.filter((player) => teamKey(player) === 0);
+        const team2Players = players.filter((player) => teamKey(player) === 1);
+
+        eventTitleEl.textContent = eventTitle;
+        team1NameEl.textContent = teams.blue || "Blue";
+        team2NameEl.textContent = teams.orange || "Orange";
+        team1NameEl.style.backgroundColor = teamNameBackgroundColor(0);
+        team2NameEl.style.backgroundColor = teamNameBackgroundColor(1);
+        team1LogoEl.textContent = (teams.blue || "B")
+          .substring(0, 1)
+          .toUpperCase();
+        team2LogoEl.textContent = (teams.orange || "O")
+          .substring(0, 1)
+          .toUpperCase();
+        team1ScoreEl.textContent = score.blue ?? 0;
+        team2ScoreEl.textContent = score.orange ?? 0;
+        timeEl.textContent = normalizeTime(state.time_seconds);
+
+        const team1Html = team1Players
+          .map((player) => renderPlayerWithBoost(player))
+          .join("");
+        const team2Html = team2Players
+          .map((player) => renderPlayerWithBoost(player, true))
+          .join("");
+
+        if (team1PlayersEl.innerHTML !== team1Html) {
+          team1PlayersEl.innerHTML = team1Html;
+        }
+        if (team2PlayersEl.innerHTML !== team2Html) {
+          team2PlayersEl.innerHTML = team2Html;
+        }
+      }
+
+      const proto = location.protocol === "https:" ? "wss" : "ws";
+      const ws = new WebSocket(`${proto}://${location.host}/ws`);
+
+      ws.addEventListener("message", (ev) => {
+        try {
+          render(JSON.parse(ev.data));
+        } catch (error) {
+          console.error(error);
+        }
+      });
+    </script>
+  </body>
+</html>
